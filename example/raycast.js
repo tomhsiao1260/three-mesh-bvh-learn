@@ -1,11 +1,23 @@
 import Stats from "stats.js";
 import * as dat from "three/examples/jsm/libs/lil-gui.module.min.js";
 import * as THREE from "three";
+import { MeshBVHHelper } from "..";
 
 const bgColor = 0x263238 / 2;
 
 let renderer, scene, stats, camera;
-let geometry, material, containerObj;
+let geometry, material, boundsViz, containerObj;
+const knots = [];
+
+// Delta timer
+let lastFrameTime = null;
+let deltaTime = 0;
+
+const params = {
+	mesh: {
+		speed: 1,
+	},
+};
 
 init();
 updateFromOptions();
@@ -29,11 +41,12 @@ function init() {
 	scene.add(new THREE.AmbientLight(0xffffff, 0.4));
 
 	containerObj = new THREE.Object3D();
-	geometry = new THREE.SphereGeometry(1.5, 32, 16);
-	material = new THREE.MeshPhongMaterial({ color: 0xe91e63 });
+	geometry = new THREE.PlaneGeometry(2, 2, 30, 30);
+	material = new THREE.MeshPhongMaterial({
+		color: 0xe91e63,
+		side: THREE.DoubleSide,
+	});
 	containerObj.scale.multiplyScalar(10);
-	containerObj.rotation.x = 10.989999999999943;
-	containerObj.rotation.y = 10.989999999999943;
 	scene.add(containerObj);
 
 	// camera setup
@@ -68,19 +81,31 @@ function init() {
 
 function addKnot() {
 	const mesh = new THREE.Mesh(geometry, material);
-	mesh.rotation.x = Math.random() * 10;
-	mesh.rotation.y = Math.random() * 10;
+	knots.push(mesh);
 	containerObj.add(mesh);
 }
 
 function updateFromOptions() {
 	addKnot();
+
+	boundsViz = new MeshBVHHelper(knots[0]);
+	containerObj.add(boundsViz);
 }
 
 function render() {
 	stats.begin();
 
+	const currTime = window.performance.now();
+	lastFrameTime = lastFrameTime || currTime;
+	deltaTime = currTime - lastFrameTime;
+
+	containerObj.rotation.x += 0.0001 * params.mesh.speed * deltaTime;
+	containerObj.rotation.y += 0.0001 * params.mesh.speed * deltaTime;
+	containerObj.updateMatrixWorld();
+
 	renderer.render(scene, camera);
+
+	lastFrameTime = currTime;
 
 	stats.end();
 
