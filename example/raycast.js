@@ -44,7 +44,7 @@ function init() {
 	scene.add(new THREE.AmbientLight(0xffffff, 0.4));
 
 	containerObj = new THREE.Object3D();
-	geometry = new THREE.PlaneGeometry(2, 2, 30, 30);
+	geometry = new THREE.PlaneGeometry(2, 2, 1, 1);
 	material = new THREE.MeshPhongMaterial({
 		color: 0xe91e63,
 		side: THREE.DoubleSide,
