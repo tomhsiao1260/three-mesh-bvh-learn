@@ -41,7 +41,9 @@ class MeshBVHRootHelper extends Object3D {
 
 	update() {
 		const geometry = this.geometry;
+		const group = this._group;
 		geometry.dispose();
+		this.visible = false;
 
 		let boundsCount = 1;
 

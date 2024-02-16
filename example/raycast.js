@@ -1,7 +1,10 @@
 import Stats from "stats.js";
 import * as dat from "three/examples/jsm/libs/lil-gui.module.min.js";
 import * as THREE from "three";
-import { MeshBVHHelper } from "..";
+import { computeBoundsTree, disposeBoundsTree, MeshBVHHelper } from "..";
+
+THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
+THREE.BufferGeometry.prototype.disposeBoundsTree = disposeBoundsTree;
 
 const bgColor = 0x263238 / 2;
 
@@ -86,6 +89,9 @@ function addKnot() {
 }
 
 function updateFromOptions() {
+	geometry.computeBoundsTree({ maxLeafTris: 5 });
+	console.log(geometry);
+
 	addKnot();
 
 	boundsViz = new MeshBVHHelper(knots[0]);
