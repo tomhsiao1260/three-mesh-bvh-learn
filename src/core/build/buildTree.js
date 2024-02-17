@@ -1,6 +1,8 @@
+import { BYTES_PER_NODE } from "../Constants.js";
 import { ensureIndex, getTriCount } from "./geometryUtils.js";
 import { getBounds, computeTriangleBounds } from "./computeBoundsUtils.js";
 import { MeshBVHNode } from "../MeshBVHNode.js";
+import { populateBuffer } from "./buildUtils.js";
 
 export function buildTree(bvh, triangleBounds, offset, count, options) {
 	// epxand variables
@@ -16,7 +18,6 @@ export function buildTree(bvh, triangleBounds, offset, count, options) {
 		root.boundingData,
 		cacheCentroidBoundingData
 	);
-	console.log(root.boundingData, cacheCentroidBoundingData);
 	return root;
 }
 
@@ -37,8 +38,9 @@ export function buildPackedTree(bvh, options) {
 			range.count,
 			options
 		);
-		console.log(root);
-
-		return null;
+		const nodeCount = 1;
+		const buffer = new BufferConstructor(BYTES_PER_NODE * nodeCount);
+		populateBuffer(0, root, buffer);
+		return buffer;
 	});
 }

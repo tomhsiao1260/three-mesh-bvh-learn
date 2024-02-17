@@ -47,7 +47,7 @@ function init() {
 	geometry = new THREE.PlaneGeometry(2, 2, 1, 1);
 	material = new THREE.MeshPhongMaterial({
 		color: 0xe91e63,
-		side: THREE.DoubleSide,
+		side: THREE.FrontSide,
 	});
 	containerObj.scale.multiplyScalar(10);
 	scene.add(containerObj);
@@ -106,7 +106,7 @@ function render() {
 	deltaTime = currTime - lastFrameTime;
 
 	containerObj.rotation.x += 0.0001 * params.mesh.speed * deltaTime;
-	containerObj.rotation.y += 0.0001 * params.mesh.speed * deltaTime;
+	containerObj.rotation.y += 0.0002 * params.mesh.speed * deltaTime;
 	containerObj.updateMatrixWorld();
 
 	renderer.render(scene, camera);

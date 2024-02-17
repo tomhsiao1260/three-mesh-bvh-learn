@@ -9,4 +9,10 @@ export class MeshBVH {
 
 		buildPackedTree(this, options);
 	}
+
+	traverse(callback, rootIndex = 0) {
+		const buffer = this._roots[rootIndex];
+
+		callback(new Float32Array(buffer, 0 * 4, 6));
+	}
 }

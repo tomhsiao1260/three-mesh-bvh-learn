@@ -7,6 +7,7 @@ import {
 	Object3D,
 	Vector3,
 } from "three";
+import { arrayToBox } from "../utils/ArrayBoxUtilities.js";
 
 const boundingBox = /* @__PURE__ */ new Box3(
 	new Vector3(-1, -1, -1),
@@ -41,59 +42,84 @@ class MeshBVHRootHelper extends Object3D {
 
 	update() {
 		const geometry = this.geometry;
+		const boundsTree = this.bvh;
 		const group = this._group;
 		geometry.dispose();
 		this.visible = false;
 
-		let boundsCount = 1;
+		if (boundsTree) {
+			// count the number of bounds required
+			let boundsCount = 1;
 
-		// fill in the position buffer with the bounds corners
-		let posIndex = 0;
-		const positionArray = new Float32Array(8 * 3 * boundsCount);
+			// fill in the position buffer with the bounds corners
+			let posIndex = 0;
+			const positionArray = new Float32Array(8 * 3 * boundsCount);
+			boundsTree.traverse((boundingData) => {
+				arrayToBox(0, boundingData, boundingBox);
 
-		const { min, max } = boundingBox;
-		for (let x = -1; x <= 1; x += 2) {
-			const xVal = x < 0 ? min.x : max.x;
-			for (let y = -1; y <= 1; y += 2) {
-				const yVal = y < 0 ? min.y : max.y;
-				for (let z = -1; z <= 1; z += 2) {
-					const zVal = z < 0 ? min.z : max.z;
-					positionArray[posIndex + 0] = xVal;
-					positionArray[posIndex + 1] = yVal;
-					positionArray[posIndex + 2] = zVal;
+				const { min, max } = boundingBox;
+				for (let x = -1; x <= 1; x += 2) {
+					const xVal = x < 0 ? min.x : max.x;
+					for (let y = -1; y <= 1; y += 2) {
+						const yVal = y < 0 ? min.y : max.y;
+						for (let z = -1; z <= 1; z += 2) {
+							const zVal = z < 0 ? min.z : max.z;
+							positionArray[posIndex + 0] = xVal;
+							positionArray[posIndex + 1] = yVal;
+							positionArray[posIndex + 2] = zVal;
 
-					posIndex += 3;
+							posIndex += 3;
+						}
+					}
+				}
+
+				return true;
+			}, group);
+
+			const { min, max } = boundingBox;
+			for (let x = -1; x <= 1; x += 2) {
+				const xVal = x < 0 ? min.x : max.x;
+				for (let y = -1; y <= 1; y += 2) {
+					const yVal = y < 0 ? min.y : max.y;
+					for (let z = -1; z <= 1; z += 2) {
+						const zVal = z < 0 ? min.z : max.z;
+						positionArray[posIndex + 0] = xVal;
+						positionArray[posIndex + 1] = yVal;
+						positionArray[posIndex + 2] = zVal;
+
+						posIndex += 3;
+					}
 				}
 			}
+
+			let indexArray;
+			let indices;
+
+			// fill in the index buffer to point to the corner points
+			indices = new Uint8Array([
+				// x axis
+				0, 4, 1, 5, 2, 6, 3, 7,
+				// y axis
+				0, 2, 1, 3, 4, 6, 5, 7,
+				// z axis
+				0, 1, 2, 3, 4, 5, 6, 7,
+			]);
+
+			indexArray = new Uint16Array(indices.length * boundsCount);
+
+			const indexLength = indices.length;
+			for (let j = 0; j < indexLength; j++) {
+				indexArray[j] = indices[j];
+			}
+
+			// update the geometry
+			geometry.setIndex(new BufferAttribute(indexArray, 1, false));
+			geometry.setAttribute(
+				"position",
+				new BufferAttribute(positionArray, 3, false)
+			);
+			this.visible = true;
 		}
-
-		let indexArray;
-		let indices;
-
-		// fill in the index buffer to point to the corner points
-		indices = new Uint8Array([
-			// x axis
-			0, 4, 1, 5, 2, 6, 3, 7,
-			// y axis
-			0, 2, 1, 3, 4, 6, 5, 7,
-			// z axis
-			0, 1, 2, 3, 4, 5, 6, 7,
-		]);
-
-		indexArray = new Uint16Array(indices.length * boundsCount);
-
-		const indexLength = indices.length;
-		for (let j = 0; j < indexLength; j++) {
-			indexArray[j] = indices[j];
-		}
-
-		// update the geometry
-		geometry.setIndex(new BufferAttribute(indexArray, 1, false));
-		geometry.setAttribute(
-			"position",
-			new BufferAttribute(positionArray, 3, false)
-		);
-		this.visible = true;
 	}
 }
 
@@ -118,7 +144,7 @@ class MeshBVHHelper extends Group {
 	}
 
 	update() {
-		const bvh = null;
+		const bvh = this.bvh || this.mesh.geometry.boundsTree;
 		const { depth, edgeMaterial } = this;
 
 		const root = new MeshBVHRootHelper(bvh, edgeMaterial, depth, 0);
