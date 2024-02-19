@@ -4,7 +4,7 @@ import { ensureIndex, getTriCount } from "./geometryUtils.js";
 import { getBounds, computeTriangleBounds } from "./computeBoundsUtils.js";
 import { partition } from "./sortUtils.js";
 import { MeshBVHNode } from "../MeshBVHNode.js";
-import { populateBuffer } from "./buildUtils.js";
+import { countNodes, populateBuffer } from "./buildUtils.js";
 
 export function buildTree(bvh, triangleBounds, offset, count, options) {
 	// epxand variables
@@ -105,9 +105,10 @@ export function buildPackedTree(bvh, options) {
 			options
 		);
 		console.log("MeshBVHNode", root);
-		const nodeCount = 1;
+		const nodeCount = countNodes(root);
 		const buffer = new BufferConstructor(BYTES_PER_NODE * nodeCount);
 		populateBuffer(0, root, buffer);
+		console.log(buffer);
 		return buffer;
 	});
 }
