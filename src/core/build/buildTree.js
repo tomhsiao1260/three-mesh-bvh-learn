@@ -1,4 +1,5 @@
 import { BYTES_PER_NODE } from "../Constants.js";
+import { getOptimalSplit } from "./splitUtils.js";
 import { ensureIndex, getTriCount } from "./geometryUtils.js";
 import { getBounds, computeTriangleBounds } from "./computeBoundsUtils.js";
 import { partition } from "./sortUtils.js";
@@ -41,7 +42,7 @@ export function buildTree(bvh, triangleBounds, offset, count, options) {
 			return node;
 		}
 
-		const split = { axis: 0, pos: 0 };
+		const split = getOptimalSplit(centroidBoundingData);
 
 		const splitOffset = partionFunc(
 			(indirectBuffer = null),
