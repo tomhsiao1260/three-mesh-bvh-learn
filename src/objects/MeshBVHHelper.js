@@ -49,12 +49,16 @@ class MeshBVHRootHelper extends Object3D {
 
 		if (boundsTree) {
 			// count the number of bounds required
-			let boundsCount = 1;
+			let boundsCount = 0;
+			boundsTree.traverse((depth, isLeaf) => {
+				boundsCount++;
+				return isLeaf;
+			}, group);
 
 			// fill in the position buffer with the bounds corners
 			let posIndex = 0;
 			const positionArray = new Float32Array(8 * 3 * boundsCount);
-			boundsTree.traverse((boundingData) => {
+			boundsTree.traverse((depth, isLeaf, boundingData) => {
 				arrayToBox(0, boundingData, boundingBox);
 
 				const { min, max } = boundingBox;
@@ -73,24 +77,8 @@ class MeshBVHRootHelper extends Object3D {
 					}
 				}
 
-				return true;
+				return isLeaf;
 			}, group);
-
-			const { min, max } = boundingBox;
-			for (let x = -1; x <= 1; x += 2) {
-				const xVal = x < 0 ? min.x : max.x;
-				for (let y = -1; y <= 1; y += 2) {
-					const yVal = y < 0 ? min.y : max.y;
-					for (let z = -1; z <= 1; z += 2) {
-						const zVal = z < 0 ? min.z : max.z;
-						positionArray[posIndex + 0] = xVal;
-						positionArray[posIndex + 1] = yVal;
-						positionArray[posIndex + 2] = zVal;
-
-						posIndex += 3;
-					}
-				}
-			}
 
 			let indexArray;
 			let indices;
@@ -107,9 +95,12 @@ class MeshBVHRootHelper extends Object3D {
 
 			indexArray = new Uint16Array(indices.length * boundsCount);
 
-			const indexLength = indices.length;
-			for (let j = 0; j < indexLength; j++) {
-				indexArray[j] = indices[j];
+			for (let i = 0; i < boundsCount; i++) {
+				const posOffset = i * 8;
+				const indexOffset = i * indices.length;
+				for (let j = 0; j < indices.length; j++) {
+					indexArray[indexOffset + j] = posOffset + indices[j];
+				}
 			}
 
 			// update the geometry

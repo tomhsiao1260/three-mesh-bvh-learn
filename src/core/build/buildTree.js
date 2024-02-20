@@ -57,7 +57,7 @@ export function buildTree(bvh, triangleBounds, offset, count, options) {
 
 		// create the left child and compute its bounding box
 		const left = new MeshBVHNode();
-		const lstart = 0;
+		const lstart = offset;
 		const lcount = splitOffset - offset;
 		node.left = left;
 
@@ -108,7 +108,7 @@ export function buildPackedTree(bvh, options) {
 		const nodeCount = countNodes(root);
 		const buffer = new BufferConstructor(BYTES_PER_NODE * nodeCount);
 		populateBuffer(0, root, buffer);
-		console.log(buffer);
+		console.log("Buffer", buffer);
 		return buffer;
 	});
 }

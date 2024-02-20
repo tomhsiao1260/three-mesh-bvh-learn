@@ -44,7 +44,7 @@ function init() {
 	scene.add(new THREE.AmbientLight(0xffffff, 0.4));
 
 	containerObj = new THREE.Object3D();
-	geometry = new THREE.PlaneGeometry(2, 2, 2, 2);
+	geometry = new THREE.PlaneGeometry(2, 2, 4, 4);
 	material = new THREE.MeshPhongMaterial({
 		color: 0xe91e63,
 		side: THREE.FrontSide,
@@ -90,7 +90,7 @@ function addKnot() {
 
 function updateFromOptions() {
 	geometry.computeBoundsTree({ maxLeafTris: 5 });
-	console.log(geometry);
+	console.log("Geometry", geometry);
 
 	addKnot();
 
