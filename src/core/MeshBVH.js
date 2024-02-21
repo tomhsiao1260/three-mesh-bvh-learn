@@ -1,5 +1,6 @@
 import { buildPackedTree } from "./build/buildTree.js";
 import { BYTES_PER_NODE, IS_LEAFNODE_FLAG } from "./Constants.js";
+import { raycastFirst } from "./cast/raycastFirst.js";
 
 export class MeshBVH {
 	constructor(geometry, options = {}) {
@@ -48,5 +49,24 @@ export class MeshBVH {
 				}
 			}
 		}
+	}
+
+	raycastFirst(ray, material) {
+		const roots = this._roots;
+		const geometry = this.geometry;
+
+		let closestResult = null;
+
+		for (let i = 0, l = roots.length; i < l; i++) {
+			const result = raycastFirst(this, i, material.side, ray);
+			if (
+				result != null &&
+				(closestResult == null || result.distance < closestResult.distance)
+			) {
+				closestResult = result;
+			}
+		}
+
+		return closestResult;
 	}
 }
