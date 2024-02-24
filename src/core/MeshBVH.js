@@ -1,6 +1,7 @@
 import { buildPackedTree } from "./build/buildTree.js";
 import { BYTES_PER_NODE, IS_LEAFNODE_FLAG } from "./Constants.js";
 import { raycastFirst } from "./cast/raycastFirst.js";
+import { closestPointToPoint } from "./cast/closestPointToPoint.js";
 
 export class MeshBVH {
 	constructor(geometry, options = {}) {
@@ -68,5 +69,14 @@ export class MeshBVH {
 		}
 
 		return closestResult;
+	}
+
+	closestPointToPoint(
+		point,
+		target = {},
+		minThreshold = 0,
+		maxThreshold = Infinity
+	) {
+		return closestPointToPoint(this, point, target, minThreshold, maxThreshold);
 	}
 }

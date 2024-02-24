@@ -182,6 +182,13 @@ function updateFromOptions() {
 
 	boundsViz = new MeshBVHHelper(knots[0]);
 	containerObj.add(boundsViz);
+
+	calculatePointDistance(new THREE.Vector3(0.75, 0.75, 1.0));
+}
+
+function calculatePointDistance(point) {
+	const target = geometry.boundsTree.closestPointToPoint(point);
+	console.log("point: ", point, "target: ", target);
 }
 
 function render() {
