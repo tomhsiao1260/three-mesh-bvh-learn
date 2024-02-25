@@ -5,7 +5,7 @@ import { raycastFirst } from "./cast/raycastFirst.js";
 import { closestPointToPoint } from "./cast/closestPointToPoint.js";
 import { ExtendedTrianglePool } from "../utils/ExtendedTrianglePool.js";
 import { iterateOverTriangles } from "./utils/iterationUtils.js";
-import { setTriangle } from "../utils/TriangleUtilities.js";
+import { shapecast } from "./cast/shapecast.js";
 
 export class MeshBVH {
 	constructor(geometry, options = {}) {
@@ -77,28 +77,47 @@ export class MeshBVH {
 
 	shapecast(callbacks) {
 		const triangle = ExtendedTrianglePool.getPrimitive();
+		const iterateFunc = iterateOverTriangles;
+		let {
+			boundsTraverseOrder,
+			intersectsBounds,
+			intersectsRange,
+			intersectsTriangle,
+		} = callbacks;
 
-		// just a simple test for the triangle part
-		const tri = 0;
-		const { index } = this.geometry;
-		const pos = this.geometry.attributes.position;
-		setTriangle(triangle, tri * 3, index, pos);
-		triangle.needsUpdate = true;
+		intersectsRange = (offset, count, contained, depth, nodeIndex) => {
+			return iterateFunc(
+				offset,
+				count,
+				this,
+				intersectsTriangle,
+				contained,
+				depth,
+				triangle
+			);
+		};
 
-		// temp: closest position on that triangle for a given point
-		const point = new THREE.Vector3(-2.0, -0.25, 0);
-		const temp = new THREE.Vector3();
-		triangle.closestPointToPoint(point, temp);
-		console.log(triangle, temp);
+		// run shapecast
+		let result = false;
+		let byteOffset = 0;
+		const roots = this._roots;
+		for (let i = 0, l = roots.length; i < l; i++) {
+			const root = roots[i];
+			result = shapecast(
+				this,
+				i,
+				intersectsBounds,
+				intersectsRange,
+				boundsTraverseOrder,
+				byteOffset
+			);
 
-		// const iterateFunc = iterateOverTriangles;
+			if (result) {
+				break;
+			}
 
-		// let {
-		// 	boundsTraverseOrder,
-		// 	intersectsBounds,
-		// 	intersectsRange,
-		// 	intersectsTriangle,
-		// } = callbacks;
+			byteOffset += root.byteLength;
+		}
 
 		ExtendedTrianglePool.releasePrimitive(triangle);
 	}
