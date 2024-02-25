@@ -19,7 +19,11 @@ export function closestPointToPoint(
 	let closestDistanceSq = Infinity;
 	let closestDistanceTriIndex = null;
 
-	// will write some shapecast code here
+	bvh.shapecast({
+		boundsTraverseOrder: null,
+		intersectsBounds: null,
+		intersectsTriangle: null,
+	});
 
 	if (closestDistanceSq === Infinity) return null;
 

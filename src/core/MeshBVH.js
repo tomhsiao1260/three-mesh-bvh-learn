@@ -1,7 +1,11 @@
+import * as THREE from "three";
 import { buildPackedTree } from "./build/buildTree.js";
 import { BYTES_PER_NODE, IS_LEAFNODE_FLAG } from "./Constants.js";
 import { raycastFirst } from "./cast/raycastFirst.js";
 import { closestPointToPoint } from "./cast/closestPointToPoint.js";
+import { ExtendedTrianglePool } from "../utils/ExtendedTrianglePool.js";
+import { iterateOverTriangles } from "./utils/iterationUtils.js";
+import { setTriangle } from "../utils/TriangleUtilities.js";
 
 export class MeshBVH {
 	constructor(geometry, options = {}) {
@@ -69,6 +73,34 @@ export class MeshBVH {
 		}
 
 		return closestResult;
+	}
+
+	shapecast(callbacks) {
+		const triangle = ExtendedTrianglePool.getPrimitive();
+
+		// just a simple test for the triangle part
+		const tri = 0;
+		const { index } = this.geometry;
+		const pos = this.geometry.attributes.position;
+		setTriangle(triangle, tri * 3, index, pos);
+		triangle.needsUpdate = true;
+
+		// temp: closest position on that triangle for a given point
+		const point = new THREE.Vector3(-2.0, -0.25, 0);
+		const temp = new THREE.Vector3();
+		triangle.closestPointToPoint(point, temp);
+		console.log(triangle, temp);
+
+		// const iterateFunc = iterateOverTriangles;
+
+		// let {
+		// 	boundsTraverseOrder,
+		// 	intersectsBounds,
+		// 	intersectsRange,
+		// 	intersectsTriangle,
+		// } = callbacks;
+
+		ExtendedTrianglePool.releasePrimitive(triangle);
 	}
 
 	closestPointToPoint(
