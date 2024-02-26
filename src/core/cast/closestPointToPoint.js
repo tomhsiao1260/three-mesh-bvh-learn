@@ -20,9 +20,28 @@ export function closestPointToPoint(
 	let closestDistanceTriIndex = null;
 
 	bvh.shapecast({
-		boundsTraverseOrder: null,
-		intersectsBounds: null,
-		intersectsTriangle: null,
+		boundsTraverseOrder: (box) => {
+			temp.copy(point).clamp(box.min, box.max);
+			return temp.distanceToSquared(point);
+		},
+		intersectsBounds: (box, isLeaf, score) => {
+			return score < closestDistanceSq && score < maxThresholdSq;
+		},
+		intersectsTriangle: (tri, triIndex) => {
+			tri.closestPointToPoint(point, temp);
+			const distSq = point.distanceToSquared(temp);
+			if (distSq < closestDistanceSq) {
+				temp1.copy(temp);
+				closestDistanceSq = distSq;
+				closestDistanceTriIndex = triIndex;
+			}
+
+			if (distSq < minThresholdSq) {
+				return true;
+			} else {
+				return false;
+			}
+		},
 	});
 
 	if (closestDistanceSq === Infinity) return null;
