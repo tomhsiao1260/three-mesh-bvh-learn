@@ -120,6 +120,8 @@ export class MeshBVH {
 		}
 
 		ExtendedTrianglePool.releasePrimitive(triangle);
+
+		return result;
 	}
 
 	closestPointToPoint(
