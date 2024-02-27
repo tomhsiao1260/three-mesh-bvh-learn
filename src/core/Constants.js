@@ -1,3 +1,8 @@
+// Traversal constants
+export const NOT_INTERSECTED = 0;
+export const INTERSECTED = 1;
+export const CONTAINED = 2;
+
 // Build constants
 export const BYTES_PER_NODE = 6 * 4 + 4 + 4;
 export const IS_LEAFNODE_FLAG = 0xffff;

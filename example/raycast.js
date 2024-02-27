@@ -183,7 +183,8 @@ function updateFromOptions() {
 	boundsViz = new MeshBVHHelper(knots[0]);
 	containerObj.add(boundsViz);
 
-	calculatePointDistance(new THREE.Vector3(0.75, 0.75, 1.0));
+	calculatePointDistance(new THREE.Vector3(-0.5, 0.5, 1));
+	calculatePointDistance(new THREE.Vector3(0.5, -0.5, 1));
 }
 
 function calculatePointDistance(point) {
