@@ -29,7 +29,7 @@ THREE.BufferGeometry.prototype.disposeBoundsTree = disposeBoundsTree;
 geometry.computeBoundsTree();
 ```
 
-這會在 geometry 上加上一個 `boundsTree` 屬性，也就是產生一個 `MeshBVH` 的類實例
+會在 geometry 內加上一個 `boundsTree` 屬性，也就是產生一個 `MeshBVH` 的類實例
 
 ```javascript
 export function computeBoundsTree(options) {
@@ -38,7 +38,7 @@ export function computeBoundsTree(options) {
 }
 ```
 
-`MeshBVH` 會在初始化時呼叫 `buildPackedTree` 函數，來建立一個尋訪 geometry 的樹狀結構，這個結構的結果會儲存在 `geometry.boundsTree._roots` 裡，這是個 array，但如果這樹的起始只有一個切入點那 array 裡只會有一項，這一項是個 buffer，記錄了整個樹的一些節點資訊，後面會更詳細解釋
+`MeshBVH` 會在初始化時呼叫 `buildPackedTree` 來建立一個尋訪 geometry 的樹狀結構，這個結構的結果會儲存在 `geometry.boundsTree._roots` 裡，這是個 array，但如果樹的起始只有一個切入點， array 裡則只會有一項，這一項是個 buffer，記錄了整個樹的一些節點資訊，後面會更詳細解釋
 
 另外，`MeshBVH` 在創建的過程還會在內部維護一個 geometry，這個內部的 geometry 裡的三角形 indices 會在樹建立的過程被重新排序，所以才能做到搭配 buffer 的資訊對空間進行快速的訪問
 
@@ -54,7 +54,7 @@ export class MeshBVH {
 
 更詳細來說，樹的建立是在 `buildPackedTree` 函數裡先透過 `buildTree` 函數建立的，這個函數會計算出一個樹狀結構的物件，並同時對內部維護的 geometry 裡的三角形重新排序，然後這個樹狀結構的物件再透過 `populateBuffer` 函數轉換成 buffer 供外部快速讀取。
 
-所以說，整個核心程式碼寫在 `buildTree` 函數裡，裡面是個遞迴結構，大致上就是為每個節點寫入相關資訊。其中每個節點都是個 `MeshBVHNode` 的類實例，裡面都有一個 `boundingData` 屬性紀錄該節點的 bounding box 資訊，但對於該節點是否為 Leaf Node 則有下面兩種寫入屬性的方式：
+所以說，整個核心程式碼寫在 `buildTree` 函數裡，裡面是個遞迴結構，大致上就是為每個節點寫入相關資訊。其中每個節點都是個 `MeshBVHNode` 的類實例，裡面都有一個 `boundingData` 屬性紀錄該節點的 bounding box 資訊，而對於該節點是否為 Leaf Node 則有下面兩種寫入屬性的方式：
 
 ```javascript
 // Is Not Leaf Node
@@ -71,7 +71,8 @@ count: 節點內的三角形個數
 
 在了解整個樹狀結構想要寫入什麼資訊後，我們可以再進一步來看 `buildTree` 函數是怎麼做到這件事的。首先，在進入函數前，`computeTriangleBounds` 會負責先計算出所有小三角形的 bounding box，把三角形視為長方體以便做後續的排序比較，再來就是遞迴式的計算每個節點的資訊，也就是執行 `splitNode` 函數，這個函數每次會依序做這五件事：
 
-1. 找出分割軸並將三角形重新排序：會透過 `getOptimalSplit` 找出最寬的那個軸作為分割軸，且以中心作為切割點，然後透過 `partionFunc` 把內部維護的 geometry 內的三角形由左到右重新排序 (沿軸的垂直方向)，並回傳 `splitOffset` 作為左右兩邊三角形的 index 分水嶺。
+```
+1. 找出分割軸並將三角形重新排序：會先透過 `getOptimalSplit` 找出最寬的那個軸作為分割軸，並以中心作為切割點，然後透過 `partionFunc` 把內部維護的 geometry 內的三角形由左到右重新排序 (沿軸的垂直方向)，並回傳 `splitOffset` 作為左右兩邊三角形的 index 分水嶺。
 
 2. 透過 `getBounds` 函數計算左側的 bounding box
 
@@ -80,8 +81,9 @@ count: 節點內的三角形個數
 4. 透過 `getBounds` 函數計算右側的 bounding box
 
 5. 執行右側的 `splitNode` 函數
+```
 
-這樣跑完後，樹就建立好了，內部維護的 geometry 也排序好了。再來就是要透過 `populateBuffer` 把樹的節點資訊寫進 buffer，下面是寫入的格式。在這樣的架構下，你可以對照 `nodeBufferUtils.js` 檔案裡的方法是怎麼讀取這些 buffer 資料的：
+這樣跑完後，樹就建立好了，內部維護的 geometry 也排序好了。再來就是要透過 `populateBuffer` 把樹的節點資訊寫進 buffer，供往後遍歷樹狀結構時能快速讀取。下面是寫入的格式，在這樣的架構下，你可以對照 `nodeBufferUtils.js` 檔案裡的方法是怎麼讀取這些 buffer 資料的：
 
 ```javascript
 boundingData : 6 float32
@@ -97,6 +99,6 @@ splitAxis / isLeaf + count : 1 uint32 / 2 uint16
 THREE.Mesh.prototype.raycast = acceleratedRaycast;
 ```
 
-遍歷的核心程式碼寫在 `raycastFirst.js` 裡，會先透過遞迴式的訪問一系列的 bounding box，然後當走到某個 Leaf Node 時，再透過 `intersectClosestTri` 方法找出那個節點裡有沒有三角形被射線打到，並回傳相關資訊
+遍歷的核心程式碼寫在 `raycastFirst.js` 裡，這會遞迴式的訪問一系列的 bounding box，然後當走到某個 Leaf Node 時，再透過 `intersectClosestTri` 方法找出那個節點裡有沒有三角形被射線打到，並跟 Three.js 傳統的 raycast 一樣回傳相關資訊
 
-另一種應用情境就是某個點到 geometry 上的距離計算，外部可以透過呼叫 `closestPointToPoint` 這個方法來計算，遍歷的方式就比較繁雜點，程式的切入點寫在 `closestPointToPoint.js`，內部用到了一個叫 `shapecast` 的方法，它定義了一套在遍歷時的評分機制，並根據這些評分來決定要往哪個節點尋訪，並且到 Leaf Node 時，會透過 `iterateOverTriangles` 函數來對內部的所有三角形逐一的進行距離的比較計算。不過這段我覺得因為作者為了要讓 `shapecast` 能涵蓋許多應用情境，做了一定程度的抽象，這也使得這部分的程式碼有點跳來跳去的不太好閱讀
+另一種應用情境是某個點到 geometry 上的最近距離計算，外部可以透過呼叫 `closestPointToPoint` 得出結果，其內部的遍歷方式就比較繁雜點，程式的切入點寫在 `closestPointToPoint.js`，內部用到了一個叫 `shapecast` 的方法，它定義了一套在遍歷時的評分機制，並根據這些評分來決定要往哪個節點尋訪，並且到 Leaf Node 時，會透過 `iterateOverTriangles` 函數來對內部的所有三角形逐一的進行距離的比較計算。不過這段作者為了要讓 `shapecast` 能涵蓋許多應用情境，做了一定程度的抽象，使得這部分程式碼有點跳來跳去的不太好閱讀
